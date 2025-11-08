@@ -1,0 +1,45 @@
+{% extends "magazin/baza.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <a href="{{ request.META.HTTP_REFERER }}" class="btn inapoi-link">
+        &laquo; Înapoi la listă
+    </a>
+    
+    <h1 class="nume">{{ produs.nume }}</h1>
+
+    <div class="detalii-grid">
+        <div class="grid-col-img">
+            {% if produs.imagine %}
+                <img src="{{ produs.imagine.url }}" alt="{{ produs.nume }}" class="img">
+            {% else %}
+                <img src="{% static 'magazin/imagini/petshop_imgage.jpg' %}" alt="Imagine lipsă" class="img ph">
+            {% endif %}
+        </div>
+        
+        <div class="grid-col-text">
+            <h2 class="sectiune-titlu">Descriere Produs</h2>
+            <p class="text-paragraf">
+                {{ produs.descriere|linebreaks }}
+            </p>
+            <h3 class="sectiune-subtitlu">Informații Cheie</h3>
+            <ul class="detalii-lista">
+                <li>**Preț:** <strong class="valoare pret-rosu">{{ produs.pret }} RON</strong></li>
+                <li>**Stoc:** <strong class="valoare stoc-verde">{{ produs.stoc }} bucăți</strong></li>
+                {% if produs.categorie %}
+                    <li>**Categorie:** {{ produs.categorie.denumire }}</li>
+                {% endif %}
+                {% if produs.brand %}
+                    <li>**Brand:** {{ produs.brand.nume }}</li>
+                {% endif %}
+                {% if produs.greutate %}
+                    <li>**Greutate:** {{ produs.greutate }} kg</li>
+                {% endif %}
+                <li>**Adăugat:** {{ produs.data_adaugarii|date:"d M Y" }}</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

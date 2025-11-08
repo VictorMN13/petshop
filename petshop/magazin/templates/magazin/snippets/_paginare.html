@@ -1,0 +1,21 @@
+{% if pagina_produse.paginator.num_pages > 1 %}
+<div class="pagination">
+    <span class="step-links">
+        
+        {% if pagina_produse.has_previous %}
+            <a href="#" class="page-link" data-page="1">&laquo; prima</a>
+            <a href="#" class="page-link" data-page="{{ pagina_produse.previous_page_number }}">înapoi</a>
+        {% endif %}
+
+        <span class="current-page">
+            Pagina {{ pagina_produse.number }} din {{ pagina_produse.paginator.num_pages }}.
+        </span>
+
+        {% if pagina_produse.has_next %}
+            <a href="#" class="page-link" data-page="{{ pagina_produse.next_page_number }}">înainte</a>
+            <a href="#" class="page-link" data-page="{{ pagina_produse.paginator.num_pages }}">ultima &raquo;</a>
+        {% endif %}
+        
+    </span>
+</div>
+{% endif %}

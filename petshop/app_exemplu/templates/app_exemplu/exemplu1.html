@@ -1,0 +1,9 @@
+{% extends "./baza.html" %}
+{% load static %}
+{% block title %}Pagina articolului{% endblock %}
+
+{% block content %}
+<h1>Titlu</h1>
+<p>paragraf {{nume}}</p>
+<img src="{% static "app_exemplu/imagini/petshop_imgage.jpg" %}" alt = "image">
+{% endblock %}

@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+        <title>{% block title %}Pet Shop{% endblock %}</title>
+        <link rel="stylesheet" href="{% static "magazin/css/style.css" %}" type="text/css"/>
+    </head>
+    <body>
+        <header>
+            <h1>Petshop</h1>
+            <nav class="meniu">
+                <ul>
+                    <li class="dropdown">
+                        <a href="{% url 'index' %}">Acasă</a>
+                        <ul class="dropdown-content">
+                            <li><a href="{% url 'index' %}#recomandate">Produse recomandate</a></li>
+                            <li><a href="{% url 'index' %}#oferte">Oferte</a></li>
+                            <li><a href="{% url 'index' %}#galerie">Galerie</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="dropdown">
+                        <a href="{% url 'despre' %}">Despre</a>
+                        <ul class="dropdown-content">
+                            <li><a href="{% url 'despre' %}#cine">Cine suntem noi</a></li>
+                            <li><a href="{% url 'despre' %}#dece">De ce să ne alegi?</a></li>
+                            <li><a href="{% url 'despre' %}#parteneri">Parteneri</a></li>
+                        </ul>
+                    </li>
+
+                    <li><a href="{% url 'produse' %}">Produse</a></li>
+                    <li class="dropdown">
+                        <a href="#">Categorii</a>
+                        <ul class="dropdown-content">
+                            {% for cat in toate_categoriile %}
+                                <li>
+                                    <a href="{% url 'pag_categorie' slug_categorie=cat.slug %}">
+                                        {{ cat.denumire }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li><a href="{% url 'in_lucru' %}">Servicii</a></li>
+                    <li><a href="{% url 'in_lucru' %}">Contact</a></li>
+                    <li><a href="{% url 'in_lucru' %}">Coș Virtual</a></li>
+                    <li><a href="{% url 'in_lucru' %}">Blog Săptămânal</a></li>
+                </ul>
+            </nav>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <footer>
+            {%block afis_ip%}{%endblock%}
+            <p>© 2025 Petshop</p>
+        </footer>
+    </body>
+</html> 

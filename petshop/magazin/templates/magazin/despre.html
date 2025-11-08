@@ -1,0 +1,47 @@
+{% extends "./baza.html" %}
+{% load static %}
+{% block title %}Despre Noi{% endblock %}
+
+{% block content%}
+<div class="container">
+
+    <h1>Despre Noi</h1>
+
+    <section id="cine">
+        <h2>Cine suntem noi</h2>
+        <p>
+            Bun venit la <strong>PetShop!</strong> Suntem mai mult decât un simplu magazin; suntem o comunitate dedicată bunăstării și fericirii animalelor de companie. Născut dintr-o pasiune profundă pentru prietenii necuvântători, PetShop a fost creat pentru a oferi proprietarilor de animale acces la produse de cea mai înaltă calitate și servicii excepționale.
+        </p>
+        <p>
+            Echipa noastră este formată din iubitori de animale cu experiență, gata să vă ofere sfaturi personalizate și soluții adaptate nevoilor unice ale fiecărui animăluț. Credem cu tărie că un animal fericit înseamnă un stăpân fericit, iar misiunea noastră este să facem fiecare zi mai bună pentru tovarășii voștri blănoși, pufoși sau cu solzi.
+        </p>
+    </section>
+
+    <img src="{% static 'magazin/imagini/logo_petshop.png' %}" alt="logo">
+
+    <section id="dece">
+        <h2>De ce să ne alegi?</h2>
+        <p>
+            La PetShop, ne mândrim cu angajamentul nostru față de excelență și satisfacția clienților. Iată de ce suntem alegerea ideală pentru nevoile animalului tău:
+        </p>
+        <ul>
+            <li><strong>Produse Premium:</strong> Selectăm cu grijă doar cele mai bune branduri de hrană, accesorii, jucării și produse de igienă.</li>
+            <li><strong>Servicii Profesionale:</strong> Oferim servicii de grooming profesional și consultanță specializată, realizate de personal calificat și plin de afecțiune.</li>
+            <li><strong>Expertiză și Pasiune:</strong> Echipa noastră este nu doar bine pregătită, ci și profund dedicată animalelor. Suntem aici să vă ghidăm cu sfaturi utile.</li>
+            <li><strong>Comunitate:</strong> Ne dorim să construim o comunitate de iubitori de animale, oferind nu doar produse, ci și resurse pe blogul nostru.</li>
+        </ul>
+    </section>
+
+    <section id="parteneri">
+        <h2>Parteneri</h2>
+        <p>
+            Colaborăm cu lideri recunoscuți în industria produselor pentru animale de companie, asigurându-vă acces la cele mai inovatoare și de încredere soluții de pe piață. Printre partenerii noștri se numără [Nume Partener 1], [Nume Partener 2], [Nume Partener 3] și mulți alții, toți împărtășind viziunea noastră de a oferi ce este mai bun pentru animalele dumneavoastră.
+        </p>
+    </section>
+
+</div>
+{% endblock %}
+
+{%block afis_ip%} 
+    <p>{{ip_user}}</p>
+{%endblock%}

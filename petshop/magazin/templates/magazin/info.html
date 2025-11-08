@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+    <h1>{{title}}</h1>
+    {{paragraf|safe}}
+    <h2>Parametri</h2>
+    <p>
+        Numarul parametrilor: {{n}}
+    </p>
+    {%for elem in l_p%}
+        <ul>
+            <li>{{elem}}</li>
+        </ul>
+    {%endfor%}
+    {%block afis_ip%} 
+        <p>{{ip_user}}</p>
+    {%endblock%}
+</body>
+</html>

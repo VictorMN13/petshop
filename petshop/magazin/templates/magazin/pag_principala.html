@@ -1,0 +1,24 @@
+{% extends "magazin/baza.html" %}
+{% load static %}
+
+{% block title %}Acasă{% endblock %}
+
+{%block content%}
+    <img src="{% static "magazin/imagini/petshop_imgage.jpg" %}" alt = "image">
+    <p><b>{{text}}</b></p>
+    <div class="container">
+
+    <section id="recomandate">
+    </section>
+
+    <section id="oferte">
+    </section>
+
+    <section id="galerie">
+    </section>
+</div>
+{%endblock%}
+
+{%block afis_ip%} 
+    <p>{{ip_user}}</p>
+{%endblock%}

@@ -1,0 +1,86 @@
+{% extends "magazin/baza.html" %}
+
+{% block title %}Log Accesări{% endblock %}
+
+{% block content %}
+    {% if request.GET.ultimele %}
+        {% if mesaj %}
+            <p><b>{{ mesaj }}</b></p>
+        {% else %}
+            <h2>Ultimele accesări</h2>
+            <ul>
+                {% for acc in u_accesari %}
+                    <li>
+                        ID {{ acc.id }} | IP: {{ acc.ip_client }} | URL: {{ acc.url_acc }} |
+                        Data: {{ acc.data }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% else %}
+        <h2>Accesarile pe site</h2>
+        <ul>
+            {% for acc in accesari %}
+                <li>
+                    ID {{ acc.id }} | IP: {{ acc.ip_client }} | URL: {{ acc.url_acc }} |
+                    Data: {{ acc.data }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if request.GET.iduri %}
+        <h2>Accesarie cu id-urile cerute:</h2>
+        <ul>
+        {% for elem in id_accesari %}
+            <li>
+                ID {{ elem.id }} | IP: {{ elem.ip_client }} | URL: {{ elem.url_acc }} | Data: {{ elem.data }}
+            </li>
+        {%endfor%}
+        </ul>
+    {% endif %}
+
+    {% if request.GET.tabel %}
+        <h2>Tabel</h2>
+        <table border = "1">
+            <thead>
+                <tr>
+                    {% for c in tab_col%}
+                        <th>{{c}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in tab_val %}
+                    <tr>
+                        {% for d in l %}
+                            <td> {{d}} </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <h3>Pagina cu cele mai multe, respectiv cele mai putine accesari:</h3>
+    {% for x in extreme %}
+        <p>{{ x }}</p>
+    {% endfor %}
+
+    {% if request.GET.accesari == "nr"%}
+        <p>Numarul de accesari din sesiunea curenta: {{nr}} </p>
+    {% elif request.GET.accesari == "detalii"%}
+        <h2>Detalii accesări</h2>
+            <ul>
+                {% for acc in accesari %}
+                    <li>
+                        ID {{ acc.id }} | Data: {{ acc.data }}
+                    </li>
+                {% endfor %}
+            </ul>
+    {% endif %}
+{% endblock %}
+
+{%block afis_ip%} 
+    <p>{{ip_user}}</p>
+{%endblock%}

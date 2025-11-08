@@ -1,0 +1,89 @@
+{% extends "magazin/baza.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    {% if categorie_curenta %}
+        <h1> 
+            {% if categorie_curenta.icon_class %}
+                <i class="{{ categorie_curenta.icon_class }}"></i>
+            {% endif %}
+            {{ categorie_curenta.denumire }}
+        </h1>
+            {% if categorie_curenta.descriere %}
+                <p class="categorie-descriere">{{ categorie_curenta.descriere|linebreaks }}</p>
+            {% endif %}
+    {% else %}
+        <h1>Toate Produsele Noastre</h1>
+    {% endif %}
+    
+    <div class="product-list">
+
+        {% for produs in pag_produse %}
+            <div class="product-card">
+                
+                {% if produs.imagine %}
+                    <img src="{{ produs.imagine.url }}" alt="{{ produs.nume }}" style="height: 150px; width: auto;">
+                {% else %}
+                    <img src="{% static 'magazin/imagini/petshop_imgage.jpg' %}" alt="Imagine lipsă" style="height: 150px; width: auto;">
+                {% endif %}
+                
+                <h3>{{ produs.nume }}</h3>
+                
+                <p class="product-category">
+                    {% if produs.categorie %}
+                        
+                        {% if produs.categorie.icon_class %}
+                            <i class="{{ produs.categorie.icon_class }}" title="{{ produs.categorie.denumire }}"></i>
+                        {% endif %}
+
+                        <a href="{% url 'pag_categorie' slug_categorie=produs.categorie.slug %}">
+                            {{ produs.categorie.denumire }}
+                        </a>
+                        
+                    {% else %}
+                        Fără categorie
+                    {% endif %}
+                </p>
+                
+                <p class="product-price">{{ produs.pret }} RON</p>
+                
+                <a href="{% url 'pag_prod' produs.pk %}" class="btn-detalii">Vezi Detalii</a>
+            </div>
+        
+        {% empty %}
+            <p>Momentan nu există produse în magazin.</p>
+        
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    {% if pag_produse.paginator.num_pages > 1 %}
+        <div class="pagination">
+            <span class="step-links">
+                
+                {% if pag_produse.has_previous %}
+                    <a href="?page=1{% if sort_by %}&sort={{ sort_by }}{% endif %}">&laquo; prima</a>
+                    <a href="?page={{ pagina_produse.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">înapoi</a>
+                {% endif %}
+
+                <span class="current-page">
+                    Pagina {{ pag_produse.number }} din {{ pag_produse.paginator.num_pages }}.
+                </span>
+
+                {% if pag_produse.has_next %}
+                    <a href="?page={{ pag_produse.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">înainte</a>
+                    <a href="?page={{ pag_produse.paginator.num_pages }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">ultima &raquo;</a>
+                {% endif %}
+                
+            </span>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{%block afis_ip%} 
+    <p>{{ip_user}}</p>
+{%endblock%}
