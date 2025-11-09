@@ -14,5 +14,5 @@ urlpatterns = [
     path("blog/", views.in_lucru, name="in_lucru"),
     path('produse/<int:pk>/', views.pag_prod, name='pag_prod'),
     path('categorii/<str:slug_categorie>', views.pag_categorie, name='pag_categorie'),
-    # path('api/filtru/', views.ajax_filtru, name='ajax_filtru'),
+    path('api/filtru/', views.ajax_filtru, name='ajax_filtru'),
 ]

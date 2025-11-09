@@ -3,6 +3,256 @@
 
 {% block content %}
 <div class="container">
+
+    {% if categorie_curenta %}
+        <h1>
+            {% if categorie_curenta.icon_class %}<i class="{{ categorie_curenta.icon_class }}"></i>{% endif %}
+            {{ categorie_curenta.denumire }}
+        </h1>
+        {% if categorie_curenta.descriere %}
+            <p class="categorie-descriere">{{ categorie_curenta.descriere|linebreaks }}</p>
+        {% endif %}
+    {% else %}
+        <h1>Toate Produsele Noastre</h1>
+    {% endif %}
+
+    <hr>
+    
+    <form id="filter-form" method="GET" action="{% url 'ajax_filtru' %}">
+        
+        <div id="form-errors" style="color: red; font-weight: bold;"></div>
+
+        <div class="filter-grid">
+            <div class="form-field">
+                {{ form.nume.label_tag }}
+                {{ form.nume }}
+                <div id="error-nume" class="field-error" style="color: red;"></div>
+            </div>
+            <div class="form-field">
+                {{ form.pret_min.label_tag }}
+                {{ form.pret_min }}
+            </div>
+            <div class="form-field">
+                {{ form.pret_max.label_tag }}
+                {{ form.pret_max }}
+                <div id="error-pret_max" class="field-error" style="color: red;"></div>
+            </div>
+            
+            {% if categorie_curenta %}
+                <input type="hidden" name="cat_slug" value="{{ categorie_curenta.slug }}">
+                {{ form.categorie }}
+            {% else %}
+                <div class="form-field">{{ form.categorie.label_tag }} {{ form.categorie }}</div>
+            {% endif %}
+
+            <div class="form-field">{{ form.brand.label_tag }} {{ form.brand }}</div>
+            <div class="form-field">{{ form.in_stoc.label_tag }} {{ form.in_stoc }}</div>
+            <div class="form-field">{{ form.data_adaugare_dupa.label_tag }} {{ form.data_adaugare_dupa }}</div>
+            <div class="form-field">{{ form.greutate_min.label_tag }} {{ form.greutate_min }}</div>
+            <div class="form-field">{{ form.greutate_max.label_tag }} {{ form.greutate_max }}</div>
+            
+            <div class="form-field">
+                {{ form.items_per_page.label_tag }} 
+                {{ form.items_per_page }}
+                <input type="hidden" name="items_per_page_old" value="{{ form.items_per_page.value|default_if_none:'5' }}">
+            </div>
+        </div>
+        
+        <button type="submit">Filtrează</button>
+        <button type="reset" id="reset-button">Resetează</button>
+    </form>
+    
+    <hr>
+
+    <div class="sortare-container">
+        Sortează după preț:
+        <a href="#" class="sort-link {% if sort_by == 'a' %}activ{% endif %}" data-sort="a">Ascendent</a>
+        <a href="#" class="sort-link {% if sort_by == 'd' %}activ{% endif %}" data-sort="d">Descendent</a>
+    </div>
+
+    <div id="repagination-warning" style="color: orange; font-weight: bold; display: none;"></div>
+
+    <div id="product-list-container">
+        {% include "magazin/snippets/_lista_produse.html" with pagina_produse=pagina_produse %}
+    </div>
+
+    <div id="pagination-container">
+        {% include "magazin/snippets/_paginare.html" with pagina_produse=pagina_produse %}
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Selectoare
+    const form = document.getElementById('filter-form');
+    const productListContainer = document.getElementById('product-list-container');
+    const paginationContainer = document.getElementById('pagination-container');
+    const warningContainer = document.getElementById('repagination-warning');
+    const resetButton = document.getElementById('reset-button');
+    const sortContainer = document.querySelector('.sortare-container');
+    const formErrorsContainer = document.getElementById('form-errors');
+    
+    // Stocăm starea curentă a filtrelor, sortării și paginării
+    let currentState = new URLSearchParams(window.location.search);
+    
+    // Stocăm slug-ul categoriei dacă suntem pe o pagină de categorie
+    const initialCategoryInput = document.querySelector('input[name="cat_slug"]');
+    if (initialCategoryInput) {
+        currentState.set('cat_slug', initialCategoryInput.value);
+    }
+    
+    // --- Funcția principală care face cererea FETCH ---
+    async function fetchProduse(params) {
+        
+        // Curățăm erorile vechi
+        formErrorsContainer.innerHTML = '';
+        document.querySelectorAll('.field-error').forEach(el => el.innerHTML = '');
+        warningContainer.style.display = 'none';
+
+        try {
+            // Construim URL-ul pentru fetch
+            const url = `{% url 'ajax_filtru' %}?${params.toString()}`;
+            const response = await fetch(url);
+            
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Gestionăm erorile de validare de la server (Req 5, 9)
+                if (data.errors) {
+                    // Erori de validare (ex: pret_min > pret_max)
+                    if (data.errors.__all__) {
+                        formErrorsContainer.innerHTML = `<p>${data.errors.__all__[0].message}</p>`;
+                    }
+                    // Erori pe câmpuri (ex: nume < 3 caractere)
+                    for (const [field, errors] of Object.entries(data.errors)) {
+                        const errorDiv = document.getElementById(`error-${field}`);
+                        if (errorDiv) {
+                            errorDiv.innerHTML = errors.map(e => `<span>${e.message}</span>`).join('');
+                        }
+                    }
+                } else if (data.message) {
+                    // Erori de securitate (Req 9)
+                    alert(`Eroare: ${data.message}`);
+                } else {
+                    alert('A apărut o eroare necunoscută.');
+                }
+                return;
+            }
+
+            // Actualizăm conținutul paginii cu HTML-ul primit (Req 2)
+            productListContainer.innerHTML = data.html_produse;
+            paginationContainer.innerHTML = data.html_paginare;
+            
+            // Afișăm mesajul de repaginare (Req 7)
+            if (data.repaginare_mesaj) {
+                warningContainer.textContent = data.repaginare_mesaj;
+                warningContainer.style.display = 'block';
+            }
+            
+            // Actualizăm starea curentă
+            currentState = params;
+
+        } catch (error) {
+            console.error('A apărut o eroare la fetch:', error);
+        }
+    }
+
+    // --- EVENIMENTE ---
+
+    // 1. Trimiterea Formularului (Filtrare)
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Oprim reîncărcarea paginii
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        // Păstrăm sortarea curentă
+        if (currentState.has('sort')) {
+            params.set('sort', currentState.get('sort'));
+        }
+        // Păstrăm categoria (dacă e cazul)
+        if (initialCategoryInput) {
+             params.set('cat_slug', initialCategoryInput.value);
+             // Adăugăm și câmpul de categorie (care e disabled/hidden)
+             params.set('categorie', form.elements.categorie.value);
+        }
+        // Trimitem starea veche a paginării (Req 7)
+        params.set('items_per_page_old', currentState.get('items_per_page') || '5');
+
+        // Resetăm pagina la 1 când filtrăm
+        params.delete('page'); 
+        fetchProduse(params);
+    });
+
+    // 2. Clic pe Paginare
+    paginationContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('page-link')) {
+            e.preventDefault();
+            const page = e.target.dataset.page;
+            
+            // Creăm o copie a stării curente și setăm pagina
+            let newParams = new URLSearchParams(currentState);
+            newParams.set('page', page);
+            fetchProduse(newParams);
+        }
+    });
+
+    // 3. Clic pe Sortare (Req 3)
+    sortContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('sort-link')) {
+            e.preventDefault();
+            const sort = e.target.dataset.sort;
+            
+            // Creăm o copie a stării curente și setăm sortarea
+            let newParams = new URLSearchParams(currentState);
+            newParams.set('sort', sort);
+            
+            // Actualizăm clasa 'activ'
+            sortContainer.querySelectorAll('.sort-link').forEach(link => link.classList.remove('activ'));
+            e.target.classList.add('activ');
+            
+            // Resetăm pagina la 1 când sortăm
+            newParams.delete('page');
+            fetchProduse(newParams);
+        }
+    });
+    
+    // 4. Clic pe Resetare (Req 10)
+    resetButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Mesajul de confirmare
+        const confirmed = confirm('Sunteți sigur că doriți să resetați toate filtrele?');
+        if (confirmed) {
+            form.reset(); // Resetează formularul vizual
+            
+            // Ștergem starea și reîncărcăm default
+            let newParams = new URLSearchParams();
+            newParams.set('items_per_page', '5'); // Setăm la default
+            
+            if (initialCategoryInput) {
+                newParams.set('cat_slug', initialCategoryInput.value);
+                // Setăm și categoria la valoarea inițială (dacă e blocată)
+                newParams.set('categorie', form.elements.categorie.value);
+            }
+            
+            fetchProduse(newParams);
+            
+            // Resetăm și clasa activă de la sortare
+            sortContainer.querySelectorAll('.sort-link').forEach(link => link.classList.remove('activ'));
+        }
+    });
+});
+</script>
+{% endblock %}
+
+
+
+{% comment %} {% extends "magazin/baza.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
     {% if categorie_curenta %}
         <h1> 
             {% if categorie_curenta.icon_class %}
@@ -86,4 +336,4 @@
 
 {%block afis_ip%} 
     <p>{{ip_user}}</p>
-{%endblock%}
+{%endblock%} {% endcomment %}

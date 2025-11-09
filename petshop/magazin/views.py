@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from datetime import datetime
+from django.template.loader import render_to_string
 import locale
 from urllib.parse import urlparse, parse_qs, urlsplit
 from collections import Counter
-from .forms import ContactForm
+from .forms import ContactForm, ProdusFilterForm
 from django.core.paginator import Paginator
 from .models import Produs, Categorie, Brand
 
@@ -212,8 +213,91 @@ def contact_view(request):
     return render(request, 'aplicatie_exemplu/contact.html', {'form': form})
 
 def pag_produse(request):
-    lista_produse = Produs.objects.all()
+    """Afișează pagina inițială (cochilia) pentru TOATE produsele."""
+    logare_acces(request) # Am păstrat funcția ta de logare
     context = get_base_context()
+    
+    # Inițializăm formularul GOL cu valoarea implicită pentru paginare
+    form = ProdusFilterForm(initial={'items_per_page': 5}) 
+    
+    # Afișăm primele 5 produse (fără filtre)
+    lista_produse = Produs.objects.all().order_by('nume')
+    paginator = Paginator(lista_produse, 5) 
+    pag_produse = paginator.get_page(1) # Folosim 'pagina_produse'
+
+    context.update({
+        'pag_produse': pag_produse,
+        'form': form,
+        'sort_by': None, # Fără sortare inițială
+        'ip_user': get_ip(request) 
+    })
+    return render(request, 'magazin/produse.html', context)
+
+def pag_categorie(request, slug_categorie):
+    """Afișează pagina inițială (cochilia) pentru O CATEGORIE."""
+    logare_acces(request) # Am păstrat funcția ta de logare
+    context = get_base_context() 
+    categorie_curenta = get_object_or_404(Categorie, slug__iexact=slug_categorie)
+    
+    # Inițializăm formularul cu categoria blocată (Req 8)
+    form = ProdusFilterForm(
+        initial={'categorie': categorie_curenta, 'items_per_page': 5},
+        categorie_blocata=categorie_curenta
+    ) 
+    
+    # Afișăm primele 5 produse din categorie
+    lista_produse = Produs.objects.filter(categorie=categorie_curenta).order_by('nume')
+    paginator = Paginator(lista_produse, 5) 
+    pag_produse = paginator.get_page(1)
+    
+    context.update({
+        'pag_produse': pag_produse,
+        'categorie_curenta': categorie_curenta,
+        'form': form,
+        'sort_by': None,
+    })
+    return render(request, 'magazin/produse.html', context)
+
+
+# --- B) FUNCȚIA NOUĂ PENTRU FETCH ---
+# Acesta este "motorul" tău AJAX.
+
+def ajax_filtru(request):
+    categorie_curenta = None
+    cat_slug = request.GET.get('cat_slug') # Nume scurt pentru slug
+    if cat_slug:
+        categorie_curenta = get_object_or_404(Categorie, slug__iexact=cat_slug)
+    form = ProdusFilterForm(request.GET or None, categorie_blocata=categorie_curenta)
+    if not form.is_valid():
+        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+    cd = form.cleaned_data
+    # Req 9: Verificare de securitate
+    if categorie_curenta:
+        if cd.get('categorie') and cd.get('categorie') != categorie_curenta:
+            return JsonResponse({'status': 'error', 'message': 'Eroare: Categorie invalidă.'}, status=403)
+    # Filtrarea
+    if categorie_curenta:
+        lista_produse = Produs.objects.filter(categorie=categorie_curenta)
+    else:
+        lista_produse = Produs.objects.all()
+
+    # Metoda eficientă (DRY) de a construi filtrele
+    filtre = {}
+    if cd.get('nume'): filtre['nume__icontains'] = cd['nume']
+    if cd.get('pret_min'): filtre['pret__gte'] = cd['pret_min']
+    if cd.get('pret_max'): filtre['pret__lte'] = cd['pret_max']
+    if cd.get('brand'): filtre['brand'] = cd['brand']
+    if cd.get('in_stoc'): filtre['stoc__gt'] = 0
+    if cd.get('data_adaugare_dupa'): filtre['data_adaugarii__gte'] = cd['data_adaugare_dupa']
+    if cd.get('greutate_min'): filtre['greutate__gte'] = cd['greutate_min']
+    if cd.get('greutate_max'): filtre['greutate__lte'] = cd['greutate_max']
+    
+    if not categorie_curenta and cd.get('categorie'):
+         filtre['categorie'] = cd['categorie']
+
+    lista_produse = lista_produse.filter(**filtre)
+
+    # Sortarea (Req 3)
     sort_by = request.GET.get('sort')
     if sort_by == 'a':
         lista_produse = lista_produse.order_by('pret')
@@ -221,16 +305,55 @@ def pag_produse(request):
         lista_produse = lista_produse.order_by('-pret')
     else:
         lista_produse = lista_produse.order_by('nume')
-    paginator = Paginator(lista_produse, 5) 
-    page_number = request.GET.get('page')
-    pagina_produse = paginator.get_page(page_number)
-    ip_user = get_ip(request)
-    context.update({
+
+    # Paginarea (Req 7)
+    items_per_page = cd.get('items_per_page') or 5
+    repaginare_mesaj = None
+    items_per_page_old = request.GET.get('items_per_page_old')
+    if items_per_page_old and str(items_per_page) != items_per_page_old:
+         repaginare_mesaj = "Ați schimbat numărul de elemente pe pagină."
+
+    paginator = Paginator(lista_produse, items_per_page)
+    page_number = request.GET.get('page', 1)
+    pag_produse = paginator.get_page(page_number) # Folosim 'pagina_produse'
+    
+    context = {
+        'pag_produse': pag_produse, # Trimitem cu același nume
         'sort_by': sort_by,
-        'pag_produse': pagina_produse,
-        'ip_user': ip_user
+        'categorie_curenta': categorie_curenta,
+    }
+    
+    # Randăm HTML-ul ca string-uri
+    html_produse = render_to_string('magazin/snippets/_lista_produse.html', context, request=request)
+    html_paginare = render_to_string('magazin/snippets/_paginare.html', context, request=request)
+
+    return JsonResponse({
+        'status': 'success',
+        'html_produse': html_produse,
+        'html_paginare': html_paginare,
+        'repaginare_mesaj': repaginare_mesaj,
     })
-    return render(request, 'magazin/produse.html', context)
+
+# def pag_produse(request):
+#     lista_produse = Produs.objects.all()
+#     context = get_base_context()
+#     sort_by = request.GET.get('sort')
+#     if sort_by == 'a':
+#         lista_produse = lista_produse.order_by('pret')
+#     elif sort_by == 'd':
+#         lista_produse = lista_produse.order_by('-pret')
+#     else:
+#         lista_produse = lista_produse.order_by('nume')
+#     paginator = Paginator(lista_produse, 5) 
+#     page_number = request.GET.get('page')
+#     pagina_produse = paginator.get_page(page_number)
+#     ip_user = get_ip(request)
+#     context.update({
+#         'sort_by': sort_by,
+#         'pag_produse': pagina_produse,
+#         'ip_user': ip_user
+#     })
+#     return render(request, 'magazin/produse.html', context)
 
 def pag_prod(request, pk): # <-- Numele funcției este acum 'pag_prod'
     context = get_base_context()
@@ -241,21 +364,21 @@ def pag_prod(request, pk): # <-- Numele funcției este acum 'pag_prod'
     
     return render(request, 'magazin/produs_detaliu.html', context)
 
-def pag_categorie(request, slug_categorie):
-    context = get_base_context() 
+# def pag_categorie(request, slug_categorie):
+#     context = get_base_context() 
     
-    categorie_curenta = get_object_or_404(
-        Categorie, 
-        slug__iexact=slug_categorie
-    )
-    lista_produse = Produs.objects.filter(categorie=categorie_curenta).order_by('nume')
-    paginator = Paginator(lista_produse, 5) 
-    page_number = request.GET.get('page')
-    pagina_produse = paginator.get_page(page_number)
+#     categorie_curenta = get_object_or_404(
+#         Categorie, 
+#         slug__iexact=slug_categorie
+#     )
+#     lista_produse = Produs.objects.filter(categorie=categorie_curenta).order_by('nume')
+#     paginator = Paginator(lista_produse, 5) 
+#     page_number = request.GET.get('page')
+#     pagina_produse = paginator.get_page(page_number)
     
-    context.update({
-        'pag_produse': pagina_produse,
-        'categorie_curenta': categorie_curenta,
-    })
+#     context.update({
+#         'pag_produse': pagina_produse,
+#         'categorie_curenta': categorie_curenta,
+#     })
     
-    return render(request, 'magazin/produse.html', context)
+#     return render(request, 'magazin/produse.html', context)

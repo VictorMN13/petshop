@@ -1,24 +1,36 @@
-{% for produs in pagina_produse %}
+{% load static %}
+{% for produs in pag_produse %}
     <div class="product-card">
+        
+        {% if produs.imagine %}
+            <img src="{{ produs.imagine.url }}" alt="{{ produs.nume }}" style="height: 150px; width: auto;">
+        {% else %}
+            <img src="{% static 'magazin/imagini/petshop_imgage.jpg' %}" alt="Imagine lipsă" style="height: 150px; width: auto;">
+        {% endif %}
+        
+        <h3>{{ produs.nume }}</h3>
         
         <p class="product-category">
             {% if produs.categorie %}
+                
                 {% if produs.categorie.icon_class %}
-                    <i class="{{ produs.categorie.icon_class }}"></i>
+                    <i class="{{ produs.categorie.icon_class }}" title="{{ produs.categorie.denumire }}"></i>
                 {% endif %}
-                <a href="{% url 'pagina_categorie' slug_categorie=produs.categorie.slug %}">
+
+                <a href="{% url 'pag_categorie' slug_categorie=produs.categorie.slug %}">
                     {{ produs.categorie.denumire }}
                 </a>
+                
+            {% else %}
+                Fără categorie
             {% endif %}
         </p>
         
-        <h3>
-            <a href="{% url 'pag_prod' produs.pk %}">{{ produs.nume }}</a>
-        </h3>
-        
         <p class="product-price">{{ produs.pret }} RON</p>
         
+        <a href="{% url 'pag_prod' produs.pk %}" class="btn-detalii">Vezi Detalii</a>
     </div>
+        
 {% empty %}
     <p>Nu au fost găsite produse care să corespundă filtrelor selectate.</p>
 {% endfor %}
