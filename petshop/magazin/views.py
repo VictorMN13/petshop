@@ -216,29 +216,34 @@ def pag_produse(request):
     """Afișează pagina inițială (cochilia) pentru TOATE produsele."""
     logare_acces(request) # Am păstrat funcția ta de logare
     context = get_base_context()
-    
     # Inițializăm formularul GOL cu valoarea implicită pentru paginare
     form = ProdusFilterForm(initial={'items_per_page': 5}) 
     
     # Afișăm primele 5 produse (fără filtre)
-    lista_produse = Produs.objects.all().order_by('nume')
+    lista_produse = Produs.objects.all()
+    sort_by = request.GET.get('sort')
+    if sort_by == 'a':
+        lista_produse = lista_produse.order_by('pret')
+    elif sort_by == 'd':
+        lista_produse = lista_produse.order_by('-pret')
+    else:
+        lista_produse = lista_produse.order_by('nume')
     paginator = Paginator(lista_produse, 5) 
     pag_produse = paginator.get_page(1) # Folosim 'pagina_produse'
 
     context.update({
         'pag_produse': pag_produse,
         'form': form,
-        'sort_by': None, # Fără sortare inițială
+        'sort_by': sort_by, 
         'ip_user': get_ip(request) 
     })
     return render(request, 'magazin/produse.html', context)
 
 def pag_categorie(request, slug_categorie):
     """Afișează pagina inițială (cochilia) pentru O CATEGORIE."""
-    logare_acces(request) # Am păstrat funcția ta de logare
+    logare_acces(request)
     context = get_base_context() 
     categorie_curenta = get_object_or_404(Categorie, slug__iexact=slug_categorie)
-    
     # Inițializăm formularul cu categoria blocată (Req 8)
     form = ProdusFilterForm(
         initial={'categorie': categorie_curenta, 'items_per_page': 5},
@@ -246,7 +251,14 @@ def pag_categorie(request, slug_categorie):
     ) 
     
     # Afișăm primele 5 produse din categorie
-    lista_produse = Produs.objects.filter(categorie=categorie_curenta).order_by('nume')
+    lista_produse = Produs.objects.filter(categorie=categorie_curenta)
+    sort_by = request.GET.get('sort') 
+    if sort_by == 'a':
+        lista_produse = lista_produse.order_by('pret')
+    elif sort_by == 'd':
+        lista_produse = lista_produse.order_by('-pret')
+    else:
+        lista_produse = lista_produse.order_by('nume')
     paginator = Paginator(lista_produse, 5) 
     pag_produse = paginator.get_page(1)
     
@@ -254,7 +266,7 @@ def pag_categorie(request, slug_categorie):
         'pag_produse': pag_produse,
         'categorie_curenta': categorie_curenta,
         'form': form,
-        'sort_by': None,
+        'sort_by': sort_by,
     })
     return render(request, 'magazin/produse.html', context)
 
@@ -264,7 +276,7 @@ def pag_categorie(request, slug_categorie):
 
 def ajax_filtru(request):
     categorie_curenta = None
-    cat_slug = request.GET.get('cat_slug') # Nume scurt pentru slug
+    cat_slug = request.GET.get('cat_slug')
     if cat_slug:
         categorie_curenta = get_object_or_404(Categorie, slug__iexact=cat_slug)
     form = ProdusFilterForm(request.GET or None, categorie_blocata=categorie_curenta)
