@@ -19,7 +19,6 @@ def validare_cap_sep(value):
     """Validare j"""
     if not value:
         return
-    # Caută un spațiu sau o cratimă urmată de o minusculă
     if re.search(r'[\s-][a-zșțâăî]', value):
         raise ValidationError(
             'Fiecare cuvânt dupa separator trebuie să înceapă cu majusculă.',
@@ -40,7 +39,6 @@ def validare_no_links(value):
 
 def validare_word_cnt(value):
     """Validare b"""
-    # \w+ găsește secvențe alfanumerice
     words = re.findall(r'\w+', value)
     if not 5 <= len(words) <= 100:
         raise ValidationError(
