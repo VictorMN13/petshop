@@ -17,7 +17,7 @@
     {% endif %}
 
     <hr>
-    
+     
     <form id="filter-form" method="GET" action="{% url 'ajax_filtru' %}">
         
         <div id="form-errors" style="color: red; font-weight: bold;"></div>
@@ -73,19 +73,17 @@
     <div id="repagination-warning" style="color: orange; font-weight: bold; display: none;"></div>
 
     <div id="product-list-container">
-        {% include "magazin/snippets/_lista_produse.html" with pagina_produse=pagina_produse %}
+        {% include "magazin/snippets/_lista_produse.html" with pag_produse=pag_produse %}
     </div>
 
     <div id="pagination-container">
-        {% include "magazin/snippets/_paginare.html" with pagina_produse=pagina_produse %}
+        {% include "magazin/snippets/_paginare.html" with pag_produse=pag_produse %}
     </div>
 
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // Selectoare
     const form = document.getElementById('filter-form');
     const productListContainer = document.getElementById('product-list-container');
     const paginationContainer = document.getElementById('pagination-container');
@@ -94,38 +92,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortContainer = document.querySelector('.sortare-container');
     const formErrorsContainer = document.getElementById('form-errors');
     
-    // Stocăm starea curentă a filtrelor, sortării și paginării
+    // starea curenta a paginii echiv request.GET
     let currentState = new URLSearchParams(window.location.search);
     
-    // Stocăm slug-ul categoriei dacă suntem pe o pagină de categorie
+    //
     const initialCategoryInput = document.querySelector('input[name="cat_slug"]');
     if (initialCategoryInput) {
         currentState.set('cat_slug', initialCategoryInput.value);
     }
     
-    // --- Funcția principală care face cererea FETCH ---
+    // fetch
     async function fetchProduse(params) {
-        
-        // Curățăm erorile vechi
         formErrorsContainer.innerHTML = '';
         document.querySelectorAll('.field-error').forEach(el => el.innerHTML = '');
         warningContainer.style.display = 'none';
 
         try {
-            // Construim URL-ul pentru fetch
+            // url fetch
             const url = `{% url 'ajax_filtru' %}?${params.toString()}`;
             const response = await fetch(url);
-            
             const data = await response.json();
 
             if (!response.ok) {
-                // Gestionăm erorile de validare de la server (Req 5, 9)
                 if (data.errors) {
-                    // Erori de validare (ex: pret_min > pret_max)
+                    // err pret_min > pret_max
                     if (data.errors.__all__) {
                         formErrorsContainer.innerHTML = `<p>${data.errors.__all__[0].message}</p>`;
                     }
-                    // Erori pe câmpuri (ex: nume < 3 caractere)
+                    // err nume < 3 caractere
                     for (const [field, errors] of Object.entries(data.errors)) {
                         const errorDiv = document.getElementById(`error-${field}`);
                         if (errorDiv) {
@@ -133,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 } else if (data.message) {
-                    // Erori de securitate (Req 9)
+                    // daca reuseste sa schimbe categoria cand e hidden
                     alert(`Eroare: ${data.message}`);
                 } else {
                     alert('A apărut o eroare necunoscută.');
@@ -141,17 +135,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Actualizăm conținutul paginii cu HTML-ul primit (Req 2)
             productListContainer.innerHTML = data.html_produse;
             paginationContainer.innerHTML = data.html_paginare;
             
-            // Afișăm mesajul de repaginare (Req 7)
+            // mesaj repag
             if (data.repaginare_mesaj) {
                 warningContainer.textContent = data.repaginare_mesaj;
                 warningContainer.style.display = 'block';
-            }
-            
-            // Actualizăm starea curentă
+            }            
+            // actualizare stare curenta
             currentState = params;
 
         } catch (error) {
@@ -159,181 +151,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- EVENIMENTE ---
-
-    // 1. Trimiterea Formularului (Filtrare)
+    // filtrare
     form.addEventListener('submit', function(e) {
-        e.preventDefault(); // Oprim reîncărcarea paginii
+        e.preventDefault();
         const formData = new FormData(form);
         const params = new URLSearchParams(formData);
-        
-        // Păstrăm sortarea curentă
         if (currentState.has('sort')) {
             params.set('sort', currentState.get('sort'));
         }
-        // Păstrăm categoria (dacă e cazul)
         if (initialCategoryInput) {
              params.set('cat_slug', initialCategoryInput.value);
-             // Adăugăm și câmpul de categorie (care e disabled/hidden)
              params.set('categorie', form.elements.categorie.value);
         }
-        // Trimitem starea veche a paginării (Req 7)
         params.set('items_per_page_old', currentState.get('items_per_page') || '5');
-
-        // Resetăm pagina la 1 când filtrăm
         params.delete('page'); 
         fetchProduse(params);
     });
 
-    // 2. Clic pe Paginare
+    // paginare
     paginationContainer.addEventListener('click', function(e) {
         if (e.target.classList.contains('page-link')) {
             e.preventDefault();
             const page = e.target.dataset.page;
-            
-            // Creăm o copie a stării curente și setăm pagina
             let newParams = new URLSearchParams(currentState);
             newParams.set('page', page);
             fetchProduse(newParams);
         }
     });
 
-    // 3. Clic pe Sortare (Req 3)
+    // sortare
     sortContainer.addEventListener('click', function(e) {
         if (e.target.classList.contains('sort-link')) {
             e.preventDefault();
             const sort = e.target.dataset.sort;
-            
-            // Creăm o copie a stării curente și setăm sortarea
             let newParams = new URLSearchParams(currentState);
             newParams.set('sort', sort);
-            
-            // Actualizăm clasa 'activ'
             sortContainer.querySelectorAll('.sort-link').forEach(link => link.classList.remove('activ'));
             e.target.classList.add('activ');
-            
-            // Resetăm pagina la 1 când sortăm
             newParams.delete('page');
             fetchProduse(newParams);
         }
     });
     
-    // 4. Clic pe Resetare (Req 10)
+    // resetare
     resetButton.addEventListener('click', function(e) {
         e.preventDefault();
-        // Mesajul de confirmare
+        // msg de conf
         const confirmed = confirm('Sunteți sigur că doriți să resetați toate filtrele?');
         if (confirmed) {
-            form.reset(); // Resetează formularul vizual
-            
-            // Ștergem starea și reîncărcăm default
+            form.reset(); 
             let newParams = new URLSearchParams();
-            newParams.set('items_per_page', '5'); // Setăm la default
-            
+            newParams.set('items_per_page', '5');
             if (initialCategoryInput) {
                 newParams.set('cat_slug', initialCategoryInput.value);
-                // Setăm și categoria la valoarea inițială (dacă e blocată)
                 newParams.set('categorie', form.elements.categorie.value);
             }
-            
             fetchProduse(newParams);
-            
-            // Resetăm și clasa activă de la sortare
             sortContainer.querySelectorAll('.sort-link').forEach(link => link.classList.remove('activ'));
         }
     });
 });
 </script>
 {% endblock %}
-
-
-
-{% comment %} {% extends "magazin/baza.html" %}
-{% load static %}
-
-{% block content %}
-<div class="container">
-    {% if categorie_curenta %}
-        <h1> 
-            {% if categorie_curenta.icon_class %}
-                <i class="{{ categorie_curenta.icon_class }}"></i>
-            {% endif %}
-            {{ categorie_curenta.denumire }}
-        </h1>
-            {% if categorie_curenta.descriere %}
-                <p class="categorie-descriere">{{ categorie_curenta.descriere|linebreaks }}</p>
-            {% endif %}
-    {% else %}
-        <h1>Toate Produsele Noastre</h1>
-    {% endif %}
-    
-    <div class="product-list">
-
-        {% for produs in pag_produse %}
-            <div class="product-card">
-                
-                {% if produs.imagine %}
-                    <img src="{{ produs.imagine.url }}" alt="{{ produs.nume }}" style="height: 150px; width: auto;">
-                {% else %}
-                    <img src="{% static 'magazin/imagini/petshop_imgage.jpg' %}" alt="Imagine lipsă" style="height: 150px; width: auto;">
-                {% endif %}
-                
-                <h3>{{ produs.nume }}</h3>
-                
-                <p class="product-category">
-                    {% if produs.categorie %}
-                        
-                        {% if produs.categorie.icon_class %}
-                            <i class="{{ produs.categorie.icon_class }}" title="{{ produs.categorie.denumire }}"></i>
-                        {% endif %}
-
-                        <a href="{% url 'pag_categorie' slug_categorie=produs.categorie.slug %}">
-                            {{ produs.categorie.denumire }}
-                        </a>
-                        
-                    {% else %}
-                        Fără categorie
-                    {% endif %}
-                </p>
-                
-                <p class="product-price">{{ produs.pret }} RON</p>
-                
-                <a href="{% url 'pag_prod' produs.pk %}" class="btn-detalii">Vezi Detalii</a>
-            </div>
-        
-        {% empty %}
-            <p>Momentan nu există produse în magazin.</p>
-        
-        {% endfor %}
-    </div>
-
-    <hr>
-
-    {% if pag_produse.paginator.num_pages > 1 %}
-        <div class="pagination">
-            <span class="step-links">
-                
-                {% if pag_produse.has_previous %}
-                    <a href="?page=1{% if sort_by %}&sort={{ sort_by }}{% endif %}">&laquo; prima</a>
-                    <a href="?page={{ pagina_produse.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">înapoi</a>
-                {% endif %}
-
-                <span class="current-page">
-                    Pagina {{ pag_produse.number }} din {{ pag_produse.paginator.num_pages }}.
-                </span>
-
-                {% if pag_produse.has_next %}
-                    <a href="?page={{ pag_produse.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">înainte</a>
-                    <a href="?page={{ pag_produse.paginator.num_pages }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">ultima &raquo;</a>
-                {% endif %}
-                
-            </span>
-        </div>
-    {% endif %}
-
-</div>
-{% endblock %}
-
-{%block afis_ip%} 
-    <p>{{ip_user}}</p>
-{%endblock%} {% endcomment %}

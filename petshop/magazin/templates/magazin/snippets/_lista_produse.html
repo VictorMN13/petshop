@@ -28,7 +28,7 @@
         
         <p class="product-price">{{ produs.pret }} RON</p>
         
-        <a href="{% url 'pag_prod' produs.pk %}" class="btn-detalii">Vezi Detalii</a>
+        <a href="{% url 'pag_prod' pk=produs.pk %}" class="btn-detalii">Vezi Detalii</a>
     </div>
         
 {% empty %}

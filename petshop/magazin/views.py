@@ -233,7 +233,7 @@ def pag_produse(request):
         'form': form,
         'sort_by': sort_by, 
         'ip_user': get_ip(request) 
-    })
+    }) 
     return render(request, 'magazin/produse.html', context)
 
 def pag_categorie(request, slug_categorie):
@@ -293,7 +293,7 @@ def ajax_filtru(request):
     if cd.get('greutate_max'): filtre['greutate__lte'] = cd['greutate_max']
     
     if not categorie_curenta and cd.get('categorie'):
-         filtre['categorie'] = cd['categorie']
+        filtre['categorie'] = cd['categorie']
 
     lista_produse = lista_produse.filter(**filtre)
 
@@ -309,7 +309,7 @@ def ajax_filtru(request):
     repaginare_mesaj = None
     items_per_page_old = request.GET.get('items_per_page_old')
     if items_per_page_old and str(items_per_page) != items_per_page_old:
-         repaginare_mesaj = "Ați schimbat numărul de elemente pe pagină."
+        repaginare_mesaj = "Ai schimbat nr. de elemente pe pagina. S-ar putea sa revezi sau sa sari peste unele elemente"
 
     paginator = Paginator(lista_produse, items_per_page)
     page_number = request.GET.get('page', 1)
@@ -331,28 +331,7 @@ def ajax_filtru(request):
         'repaginare_mesaj': repaginare_mesaj,
     })
 
-# def pag_produse(request):
-#     lista_produse = Produs.objects.all()
-#     context = get_base_context()
-#     sort_by = request.GET.get('sort')
-#     if sort_by == 'a':
-#         lista_produse = lista_produse.order_by('pret')
-#     elif sort_by == 'd':
-#         lista_produse = lista_produse.order_by('-pret')
-#     else:
-#         lista_produse = lista_produse.order_by('nume')
-#     paginator = Paginator(lista_produse, 5) 
-#     page_number = request.GET.get('page')
-#     pagina_produse = paginator.get_page(page_number)
-#     ip_user = get_ip(request)
-#     context.update({
-#         'sort_by': sort_by,
-#         'pag_produse': pagina_produse,
-#         'ip_user': ip_user
-#     })
-#     return render(request, 'magazin/produse.html', context)
-
-def pag_prod(request, pk): # <-- Numele funcției este acum 'pag_prod'
+def pag_prod(request, pk): 
     context = get_base_context()
     produs = get_object_or_404(Produs, pk=pk)
     context.update({
@@ -361,21 +340,3 @@ def pag_prod(request, pk): # <-- Numele funcției este acum 'pag_prod'
     
     return render(request, 'magazin/produs_detaliu.html', context)
 
-# def pag_categorie(request, slug_categorie):
-#     context = get_base_context() 
-    
-#     categorie_curenta = get_object_or_404(
-#         Categorie, 
-#         slug__iexact=slug_categorie
-#     )
-#     lista_produse = Produs.objects.filter(categorie=categorie_curenta).order_by('nume')
-#     paginator = Paginator(lista_produse, 5) 
-#     page_number = request.GET.get('page')
-#     pagina_produse = paginator.get_page(page_number)
-    
-#     context.update({
-#         'pag_produse': pagina_produse,
-#         'categorie_curenta': categorie_curenta,
-#     })
-    
-#     return render(request, 'magazin/produse.html', context)
