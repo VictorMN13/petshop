@@ -1,0 +1,19 @@
+{% extends "magazin/baza.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Contactați-ne</h1>
+    
+    <form method="POST" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Trimite Mesajul</button>
+    </form>
+</div>
+
+{% if mesaj %}
+    <script>
+        alert("Datele au fost trimise cu succes la server!");
+    </script>
+{% endif %}
+{% endblock %}

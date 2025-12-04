@@ -11,6 +11,24 @@
     <body>
         <header>
             <h1>Petshop</h1>
+            <ul class="nav-links">
+                {% if user.is_authenticated %}
+                    <p style="color: #007bff; padding: 0 10px;">Salut, <strong>{{ user.username }}</strong></p>
+                    <li>
+                        <a href="{% url 'profil' %}">Profilul Meu</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'logout' %}" style="color: #dc3545;">Deconectare</a>
+                    </li>
+                {% else %}
+                    <li>
+                        <a href="{% url 'login' %}">Autentificare</a>
+                    </li>
+                    <li>
+                        <a href="#">Înregistrare</a>
+                    </li>
+                {% endif %}
+            </ul>
             <nav class="meniu">
                 <ul>
                     <li class="dropdown">
@@ -45,7 +63,7 @@
                         </ul>
                     </li>
                     <li><a href="{% url 'in_lucru' %}">Servicii</a></li>
-                    <li><a href="{% url 'in_lucru' %}">Contact</a></li>
+                    <li><a href="{% url 'contact_view' %}">Contact</a></li>
                     <li><a href="{% url 'in_lucru' %}">Coș Virtual</a></li>
                     <li><a href="{% url 'in_lucru' %}">Blog Săptămânal</a></li>
                 </ul>

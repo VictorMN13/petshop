@@ -1,0 +1,15 @@
+{
+    "nume": "Victor",
+    "prenume": "Victor-Jon",
+    "CNP": "1951225011234",
+    "email": "abc@ceva.com",
+    "tip_mesaj": "intrebare",
+    "subiect": "Produse serpi",
+    "minim_zile_asteptare": 2,
+    "mesaj": "As vrea sa stiu cand o sa vindeti si produse/servicii pentru serpi Victor",
+    "varsta": "29 ani și 10 luni",
+    "urgent": true,
+    "ip": "127.0.0.1",
+    "data_sosirii": "19-11-2025",
+    "ora_sosirii": "22:00:01"
+}

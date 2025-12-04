@@ -5,9 +5,16 @@ from django.template.loader import render_to_string
 import locale
 from urllib.parse import urlparse, parse_qs, urlsplit
 from collections import Counter
-from .forms import ContactForm, ProdusFilterForm
+from .forms import ContactForm, ProdusFilterForm, LoginForm
 from django.core.paginator import Paginator
 from .models import Produs, Categorie, Brand
+import json
+import time
+from django.conf import settings
+import os
+from django.contrib.auth import login, logout, update_session_auth_hash
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required
 
 class Accesare:
     _id_cnt = 1
@@ -213,7 +220,6 @@ def contact_view(request):
     return render(request, 'aplicatie_exemplu/contact.html', {'form': form})
 
 def pag_produse(request):
-    """Afișează pagina inițială (cochilia) pentru TOATE produsele."""
     logare_acces(request) 
     context = get_base_context()
     form = ProdusFilterForm(initial={'items_per_page': 5}) 
@@ -237,7 +243,6 @@ def pag_produse(request):
     return render(request, 'magazin/produse.html', context)
 
 def pag_categorie(request, slug_categorie):
-    """Afișează pagina inițială (cochilia) pentru O CATEGORIE."""
     logare_acces(request)
     context = get_base_context() 
     categorie_curenta = get_object_or_404(Categorie, slug__iexact=slug_categorie)
@@ -340,3 +345,72 @@ def pag_prod(request, pk):
     
     return render(request, 'magazin/produs_detaliu.html', context)
 
+def contact_view(request):
+    context = get_base_context()
+    mesaj = False
+
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            data['ip'] = get_ip(request) 
+            acum = datetime.now()
+            data['data_sosirii'] = acum.strftime("%d-%m-%Y")
+            data['ora_sosirii'] = acum.strftime("%H:%M:%S")
+            timestamp = int(time.time()) 
+            nume_fisier = f"mesaj_{timestamp}"
+            if data.get('urgent') is True:
+                nume_fisier += "_urgent"
+            nume_fisier += ".json"
+
+            cale_folder = os.path.join(settings.BASE_DIR, 'magazin', 'Mesaje')
+            if not os.path.exists(cale_folder):
+                os.makedirs(cale_folder)
+            cale_fisier = os.path.join(cale_folder, nume_fisier)
+            
+            try:
+                with open(cale_fisier, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=4, ensure_ascii=False)
+                mesaj = True
+                form = ContactForm()
+            except Exception as e:
+                print(f"Eroare la salvarea mesajului: {e}")
+    else:
+        form = ContactForm()
+    context['form'] = form
+    context['mesaj'] = mesaj
+    return render(request, 'magazin/contact.html', context)
+
+def login_view(request):
+    context = get_base_context()
+    if request.method == 'POST':
+        form = LoginForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            if form.cleaned_data['ramane_logat']:
+                request.session.set_expiry(86400)
+            else:
+                request.session.set_expiry(0)
+            return redirect('profil')
+    else:
+        form = LoginForm()
+        
+    context['form'] = form
+    return render(request, 'magazin/login.html', context)
+
+def logout_view(request):
+    logout(request)
+    return redirect('index')
+
+@login_required
+def profil(request):
+    context = get_base_context()
+    return render(request, 'magazin/profil.html', context)
+
+def schimbare_parola(request):
+    f = auth_views.PasswordChangeView.as_view(
+        template_name='magazin/schimbare_parola.html',
+        success_url='/magazin/profil/'
+    )
+    return f(request)

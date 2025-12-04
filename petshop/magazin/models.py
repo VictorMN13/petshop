@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import date, datetime, timedelta
 from django.utils.text import slugify
+from django.contrib.auth.models import AbstractUser
 
 class Locatie(models.Model):
     adresa = models.CharField(max_length=255)
@@ -167,3 +168,19 @@ class Produs(models.Model):
 
     class Meta:
         verbose_name_plural = "Produse"
+        
+class User(AbstractUser):
+    telefon = models.CharField(
+        max_length=15, 
+        blank=True, 
+        null=True,
+        verbose_name="Telefon"
+    )
+    
+    adresa = models.CharField(max_length=255, blank=True, null=True, verbose_name="Adresa (Strada, Nr)")
+    judet = models.CharField(max_length=100, blank=True, null=True, verbose_name="Județ")
+    localitate = models.CharField(max_length=100, blank=True, null=True, verbose_name="Localitate")
+    cod_postal = models.CharField(max_length=20, blank=True, null=True, verbose_name="Cod Poștal")
+
+    def __str__(self):
+        return f"{self.username} ({self.get_full_name()})"

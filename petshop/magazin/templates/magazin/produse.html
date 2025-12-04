@@ -95,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // starea curenta a paginii echiv request.GET
     let currentState = new URLSearchParams(window.location.search);
     
-    //
     const initialCategoryInput = document.querySelector('input[name="cat_slug"]');
     if (initialCategoryInput) {
         currentState.set('cat_slug', initialCategoryInput.value);
@@ -118,8 +117,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // err pret_min > pret_max
                     if (data.errors.__all__) {
                         formErrorsContainer.innerHTML = `<p>${data.errors.__all__[0].message}</p>`;
-                    }
-                    // err nume < 3 caractere
+                    } 
+                    // err nume < 3 caractere || pret max negativ
                     for (const [field, errors] of Object.entries(data.errors)) {
                         const errorDiv = document.getElementById(`error-${field}`);
                         if (errorDiv) {

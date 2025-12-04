@@ -1,0 +1,40 @@
+{% extends "magazin/baza.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Profilul Meu</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="color: green; padding: 10px; border: 1px solid green; margin-bottom: 15px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; max-width: 600px;">
+        <h2 style="border-bottom: 1px solid #ccc;">Salut, {{ user.first_name }}!</h2>
+        
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Telefon:</strong> {{ user.telefon|default:"-" }}</p>
+        
+        <h3 style="margin-top: 20px;">Adresa de Livrare</h3>
+        <p>
+            {{ user.adresa|default:"-" }}<br>
+            {{ user.localitate|default:"" }}, {{ user.judet|default:"" }}<br>
+            Cod Poștal: {{ user.cod_postal|default:"-" }}
+        </p>
+
+        <div style="margin-top: 30px;">
+            <a href="{% url 'schimbare_parola' %}" class="btn" style="background: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px;">
+                Schimbă Parola
+            </a>
+            
+            <a href="{% url 'logout' %}" class="btn" style="background: #dc3545; color: white; padding: 8px 15px; margin-left: 10px; text-decoration: none; border-radius: 4px;">
+                Deconectare
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "magazin/baza.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Schimbare Parolă</h1>
+    <p>Introduceți parola veche și noua parolă.</p>
+
+    <form method="POST" style="max-width: 500px;">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+        
+        <div style="margin-top: 20px;">
+            <button type="submit" style="padding: 10px 20px; background: green; color: white; border: none; cursor: pointer;">
+                Salvează Noua Parolă
+            </button>
+            
+            <a href="{% url 'profil' %}" style="margin-left: 15px; text-decoration: none; color: #666;">
+                Anulează
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

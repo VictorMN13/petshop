@@ -1,9 +1,12 @@
 from django import forms
-from .models import Categorie, Brand
+from .models import Categorie, Brand, User
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from datetime import date
 import re
+from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
+from django.contrib.auth.forms import AuthenticationForm
 
 def validare_text(value):
     """Validare i"""
@@ -356,7 +359,56 @@ class ProdusFilterForm(forms.Form):
                 )
         return cleaned_data
 
+class InregistrareForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Adresă de Email")
+    first_name = forms.CharField(required=True, label="Prenume")
+    last_name = forms.CharField(required=True, label="Nume")
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'first_name', 'last_name', 
+            'telefon', 'adresa', 'judet', 'localitate', 'cod_postal'
+        ]
         
+    def clean_telefon(self):
+        telefon = self.cleaned_data.get('telefon')
+        if not telefon:
+            raise forms.ValidationError("Numărul de telefon este obligatoriu.")
+        if not telefon.isdigit():
+            raise forms.ValidationError("Numărul de telefon trebuie să conțină doar cifre.")
 
+        if len(telefon) < 10:
+            raise forms.ValidationError("Numărul de telefon este prea scurt (minim 10 cifre).")
+        return telefon
+    
+    def clean_cod_postal(self):
+        cod = self.cleaned_data.get('cod_postal')
+        if cod:
+            if not cod.isdigit():
+                raise forms.ValidationError("Codul poștal trebuie să conțină doar cifre.")
+            if len(cod) != 6:
+                raise forms.ValidationError("Codul poștal trebuie să aibă exact 6 cifre.")
+        return cod
 
+    def clean_judet(self):
+        judet = self.cleaned_data.get('judet')
+        if judet:
+            if not judet[0].isupper():
+                raise forms.ValidationError("Numele județului trebuie să înceapă cu literă mare (ex: București, Ilfov).")
+        return judet
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Acest email este deja folosit de un alt cont.")
+        return email        
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Parola'}))
+    ramane_logat = forms.BooleanField(
+        required=False, 
+        label="Păstrează-mă logat pentru o zi",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
 

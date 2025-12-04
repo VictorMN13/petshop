@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Locatie, Animal, Serviciu, Categorie, Brand, Furnizor, Pret_Serviciu, Produs, Oferta
+from .models import Locatie, Animal, Serviciu, Categorie, Brand, Furnizor, Pret_Serviciu, Produs, Oferta, User
+from django.contrib.auth.admin import UserAdmin
 
 admin.site.site_header = "Panou Administrare PetShop"
 admin.site.site_title = "Admin PetShop"
@@ -41,6 +42,21 @@ class OfertaAdmin(admin.ModelAdmin):
     
 class PreturiServiciiAdmin(admin.ModelAdmin):
     search_fields = ('pret', 'durata')
+    
+class CustomUserAdmin(UserAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'telefon', 'localitate', 'is_staff')
+    fieldsets = UserAdmin.fieldsets + (
+        ('Date de Contact & Livrare', {
+            'fields': ('telefon', 'adresa', 'localitate', 'judet', 'cod_postal')
+        }),
+    )
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        ('Informații Suplimentare', {
+            'fields': ('email', 'first_name', 'last_name', 'telefon', 'adresa', 'localitate', 'judet', 'cod_postal')
+        }),
+    )
+
+admin.site.register(User, CustomUserAdmin)
 
 admin.site.register(Locatie)
 admin.site.register(Produs, ProdusAdmin)

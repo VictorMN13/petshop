@@ -92,6 +92,9 @@ DATABASES = {
         'PASSWORD': 'victor',
         'HOST': 'localhost',  # sau IP-ul serverului
         'PORT': '5432',       # portul implicit pentru PostgreSQL
+        'OPTIONS': {
+            'options': '-c search_path=django'
+        },
     }
 
 }
@@ -143,4 +146,4 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-#AUTH_USER_MODEL = 'magazin.CustomUser'
+AUTH_USER_MODEL = 'magazin.User'
